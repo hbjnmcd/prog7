@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - weather
+      - recommendation
+      - history
+
+  weather:
+    build: ./weather_service
+    environment:
+      - OPENWEATHER_API_KEY=""
+
+  recommendation:
+    build: ./recommendation_service
+
+  history:
+    build: ./history_service
