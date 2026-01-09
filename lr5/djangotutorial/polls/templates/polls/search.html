@@ -1,0 +1,61 @@
+<h2>Поиск голосований</h2>
+
+<label>Дата от:</label>
+<input type="date" id="date-from">
+
+<label>Дата до:</label>
+<input type="date" id="date-to">
+
+<button onclick="searchPolls()">Найти</button>
+
+<hr>
+
+<div style="display: flex;">
+    <ul id="poll-list" style="width: 40%;"></ul>
+    <div id="poll-stats" style="width: 60%; padding-left: 20px;"></div>
+</div>
+
+<a id="download-csv" style="display:none;">Скачать CSV</a>
+
+<script>
+function searchPolls() {
+    const from = document.getElementById("date-from").value;
+    const to = document.getElementById("date-to").value;
+
+    fetch(`/api/analytics/polls/search/?date_from=${from}&date_to=${to}`)
+        .then(res => res.json())
+        .then(data => {
+            const list = document.getElementById("poll-list");
+            list.innerHTML = "";
+
+            data.forEach(poll => {
+                const li = document.createElement("li");
+                li.innerText = poll.question;
+                li.style.cursor = "pointer";
+                li.onclick = () => loadStats(poll.id);
+                list.appendChild(li);
+            });
+        });
+}
+
+function loadStats(pollId) {
+    fetch(`/api/analytics/polls/${pollId}/stats/`)
+        .then(res => res.json())
+        .then(data => {
+            let html = `<h3>${data.question}</h3>`;
+            html += `<p>Всего голосов: ${data.total_votes}</p><ul>`;
+
+            data.choices.forEach(c => {
+                html += `<li>${c.text}: ${c.votes} (${c.percent}%)</li>`;
+            });
+
+            html += "</ul>";
+            document.getElementById("poll-stats").innerHTML = html;
+
+            const link = document.getElementById("download-csv");
+            link.style.display = "inline";
+            link.href = `/api/export/polls/${pollId}/?format=csv`;
+            link.innerText = "Скачать CSV";
+        });
+}
+</script>
